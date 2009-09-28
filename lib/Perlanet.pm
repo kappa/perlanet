@@ -98,7 +98,7 @@ sub BUILDARGS {
 sub BUILD {
   my $self = shift;
 
-  $self->ua(LWP::UserAgent->new( agent => $self->cfg->{agent} ||
+  $self->ua(LWP::UserAgent->new( agent => $self->cfg->{agent} ||=
                                            "Perlanet/$VERSION" ));
 
   my $opml;
