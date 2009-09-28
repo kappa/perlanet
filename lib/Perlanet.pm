@@ -267,7 +267,7 @@ sub run {
     $p->email($self->cfg->{author}{email});
   }
   $f->modified(DateTime->now);
-  my $self_url = $self->cfg->{self_link} ||
+  my $self_url = $self->cfg->{self_link} || $self->cfg->{feed}{url} ||
                 $self->cfg->{url} . $self->cfg->{feed}{file};
   $f->self_link($self_url);
   $f->id($self_url);
