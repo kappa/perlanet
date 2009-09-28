@@ -22,6 +22,24 @@ BEGIN {
   $VERSION = '0.21';
 }
 
+BEGIN {
+    use Template::Provider;
+    use bytes;
+    no warnings 'redefine';
+    my $bom = "\x{feff}";
+    my $len = length($bom);
+    *Template::Provider::_decode_unicode = sub {
+        shift;
+        my $s = shift;
+        # if we have bom, strip it
+        $s = substr($s, $len) if substr($s, 0, $len) eq $bom;
+        # then decode the string to chars representation
+        utf8::decode($s);
+        return $s;
+    }
+}
+$XML::Atom::ForceUnicode = 1;
+
 has 'cfg'  => ( is => 'rw', isa => 'HashRef' );
 has 'ua'   => ( is => 'rw', isa => 'LWP::UserAgent' );
 has 'opml' => ( is => 'rw', isa => 'XML::OPML::SimpleGen');
@@ -70,7 +88,8 @@ sub BUILDARGS {
   @_ or @_ = ('./perlanetrc');
 
   if ( @_ == 1 && ! ref $_[0] ) {
-    return { cfg => LoadFile($_[0]) };
+    open my $cfg_file, '<:utf8', $_[0];
+    return { cfg => LoadFile($cfg_file) };
   } else {
     return $class->SUPER::BUILDARGS(@_);
   }
