@@ -20,6 +20,7 @@ my $build = Module::Build->new(
                 "XML::OPML::SimpleGen" => 0,
                 "HTML::Tidy"           => 0,
                 "HTML::Scrubber"       => 0,
+                "Moose"                => 0,
 	},
         build_requires     => {
         	'Test::More'          => 0,
