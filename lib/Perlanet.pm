@@ -268,7 +268,7 @@ sub run {
   }
   $f->modified(DateTime->now);
   my $self_url = $self->cfg->{self_link} ||
-                "$self->cfg->{url}$self->cfg->{feed}{file}";
+                $self->cfg->{url} . $self->cfg->{feed}{file};
   $f->self_link($self_url);
   $f->id($self_url);
 
