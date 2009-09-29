@@ -153,7 +153,7 @@ sub run {
       $f->{title} = $feed->title;
     } 
 
-    push @entries, map { $_->title($f->{title} . ': ' . $_->title); $_ }
+    push @entries, map { $_->title("$f->{title}: " . ($_->title || '(без заголовка)')); $_ }
                          $feed->entries;
 
     if ($self->opml) {
