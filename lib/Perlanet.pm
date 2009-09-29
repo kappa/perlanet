@@ -199,6 +199,7 @@ sub run {
     tidy_mark => 0,
     show_body_only => 1,
     preserve_entities => 1,
+    show_warnings => 0,
   );
 
   # Rules for HTML::Scrub
