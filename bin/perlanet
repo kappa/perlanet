@@ -97,6 +97,13 @@ this file is created. If it exists, it should be the name of the OPML file
 to be created. If an OPML file is being created, then the C<feeds> options
 (described below) will all require a C<web> sub-option.
 
+=item cse_links
+
+The system can optionally create a bare-bone HTML page with links to
+all the feeds. This can be used to configure Google Custom Search Engine
+or any other external spider to crawl the pages. C<cse_links> option
+should contain the file name or be absent.
+
 =item page
 
 This mandatory option contains the details of the web page to be created.
@@ -109,8 +116,10 @@ more information about the Template Toolkit.
 =item feed
 
 This mandatory option contains the details of the web feed to be created.
-There are two sub-options - C<file> gives the name of the file to be created
-and C<format> gives the format of the output (currently 'Atom' or 'RSS').
+There are three sub-options - C<file> gives the name of the file to be created,
+C<format> gives the format of the output (currently 'Atom' or 'RSS')
+and C<url> gives the url by which your plan to serve the feed (e.g.
+FeedBurner url).
 
 =item feeds
 

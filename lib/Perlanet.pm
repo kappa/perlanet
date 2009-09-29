@@ -170,6 +170,14 @@ sub run {
     $self->opml->save($self->cfg->{opml});
   }
 
+  if ($self->{cfg}{cse_links}) {
+    open my $cse_html, '>', $self->{cfg}{cse_links}
+        or die "Cannot write CSE links: $!\n";
+    foreach my $feed (@{$self->{cfg}{feeds}}) {
+        print $cse_html qq{<a href="$feed->{web}">$feed->{web}</a>\n};
+    }
+  }
+
   my $day_zero = DateTime->from_epoch(epoch=>0);
 
   @entries = sort {
