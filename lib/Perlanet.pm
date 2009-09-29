@@ -14,6 +14,7 @@ use DateTime::Duration;
 use YAML 'LoadFile';
 use HTML::Tidy;
 use HTML::Scrubber;
+use POSIX qw//;
 
 require XML::OPML::SimpleGen;
 
@@ -103,7 +104,9 @@ sub BUILD {
 
   my $opml;
   if ($self->cfg->{opml}) {
+    my $loc = POSIX::setlocale(&POSIX::LC_ALL, "C");
     $opml = XML::OPML::SimpleGen->new;
+    POSIX::setlocale(&POSIX::LC_ALL, $loc);
     $opml->head(
       title => $self->cfg->{title},
     );
