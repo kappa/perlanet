@@ -257,6 +257,8 @@ sub run {
     'src'         => 1,
     'type'        => 1,
     'style'       => 1,
+    'class'       => 0,
+    'id'          => 0,
   );
 
   my $tidy = HTML::Tidy->new(\%tidy);
