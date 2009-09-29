@@ -6,7 +6,7 @@ use warnings;
 use Moose;
 use Encode;
 use List::Util 'min';
-use LWP::UserAgent;
+use URI::Fetch;
 use XML::Feed;
 use Template;
 use DateTime;
@@ -42,7 +42,7 @@ BEGIN {
 $XML::Atom::ForceUnicode = 1;
 
 has 'cfg'  => ( is => 'rw', isa => 'HashRef' );
-has 'ua'   => ( is => 'rw', isa => 'LWP::UserAgent' );
+#has 'cache'=> ( is => 'rw', isa => 'Cache::File' );
 has 'opml' => ( is => 'rw', isa => 'XML::OPML::SimpleGen');
 
 =head1 NAME
@@ -99,8 +99,7 @@ sub BUILDARGS {
 sub BUILD {
   my $self = shift;
 
-  $self->ua(LWP::UserAgent->new( agent => $self->cfg->{agent} ||=
-                                           "Perlanet/$VERSION" ));
+  $self->cfg->{agent} ||= "Perlanet/$VERSION";
 
   my $opml;
   if ($self->cfg->{opml}) {
@@ -127,7 +126,7 @@ sub run {
   my @entries;
 
   foreach my $f (@{$self->cfg->{feeds}}) {
-    my $response = $self->ua->get($f->{url});
+    my $response = URI::Fetch->fetch($f->{url});
 
     if ($response->is_error) {
       warn "$f->{url}:\n" . $response->status_line;
