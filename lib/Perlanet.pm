@@ -243,6 +243,10 @@ sub run {
     span   => {
       id    => 0,               # blogger(?) includes spans with id attribute
     },
+    a       => {
+        href    => 1,
+        '*'     => 0,
+    },
   );
 
   # Definitions for HTML::Scrub
