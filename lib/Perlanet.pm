@@ -5,7 +5,7 @@ use warnings;
 
 use Moose;
 use Encode;
-use List::Util 'min';
+use List::Util qw/min first/;
 use URI::Fetch;
 use XML::Feed;
 use Template;
@@ -171,8 +171,15 @@ sub run {
       $f->{title} = $feed->title;
     } 
 
-    push @entries, map { $_->title("$f->{title}: " . ($_->title || '(без заголовка)')); $_ }
-                         $feed->entries;
+    my @feed_entries = map { $_->title("$f->{title}: " . ($_->title || '(без заголовка)')); $_ } $feed->entries;
+
+    if ($f->{filter}) {
+        if ($f->{filter}{type} eq 'category') {
+            @feed_entries = grep { first { $_ eq $f->{filter}{category} } $_->category } @feed_entries;
+        }
+    }
+
+    push @entries, @feed_entries;
 
     if ($self->opml) {
       $self->opml->insert_outline(
