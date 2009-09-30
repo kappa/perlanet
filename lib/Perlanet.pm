@@ -104,7 +104,6 @@ sub BUILD {
   $self->ua(LWP::UserAgent->new(
     agent => $self->cfg->{agent} ||= "Perlanet/$VERSION"
   ));
-  $self->ua->show_progress(1);
 
   $self->cfg->{cache_dir}
     and $self->cache(CHI->new(
