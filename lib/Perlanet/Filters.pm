@@ -10,8 +10,11 @@ sub create_filter {
 
     # if ARRAY, then chain
 
-    if ($cfg->{type} eq 'category') {
-        return Perlanet::Filter::Category->new($cfg->{category});;
+    if      ($cfg->{type} eq 'category') {
+        return Perlanet::Filter::Category->new($cfg->{category});
+    }
+    elsif   ($cfg->{type} eq 'vingrad') {
+        return bless {}, Perlanet::Filter::Vingrad;
     }
 
     die "Unknown filter type requested: $cfg->{type}\n";
@@ -62,5 +65,29 @@ sub filter {
 
     return @rv;
 }
+
+package Perlanet::Filter::Vingrad;
+use List::Util qw/first/;
+
+sub filter {
+    my $self = shift;
+    my @rv;
+
+    ENTRY:
+    foreach my $e (@_) {
+        my $text = $e->content->body;
+
+        $text =~ /<table class='quote'/ and next; # most probably a comment
+
+        $text =~ s/<table>.+<td>.+<td>(.+)<\/td>.+<\/table>/$1/s;
+
+        $e->content($text);
+
+        push @rv, $e;
+    }
+
+    return @rv;
+}
+
 
 1;
