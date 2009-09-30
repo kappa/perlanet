@@ -13,6 +13,7 @@ page:
 feed:
   file: atom.xml
   format: Atom
+cache_dir: /tmp/perlanet-cache
 feeds:
   - url: http://www.badscience.net/?feed=atom
     title: Bad Science
