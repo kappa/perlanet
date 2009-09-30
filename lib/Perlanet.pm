@@ -145,7 +145,7 @@ sub run {
     );
 
     if ($response->is_error) {
-      warn "$f->{url}:\n" . $response->status_line;
+      warn "$f->{url}:\n" . $response->http_response->status_line;
       next;
     }
 
