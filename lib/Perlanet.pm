@@ -315,14 +315,7 @@ sub run {
                                  $scrubbed :
                                  decode('utf8', $scrubbed));
 
-      # hack to remove a particularly nasty piece of blogspot HTML
-      $clean =~ s|<div align="justify"></div>||g;
       $entry->content($clean);
-    }
-
-    # Problem with XML::Feed's conversion of RSS to Atom
-    if ($entry->issued && ! $entry->modified) {
-      $entry->modified($entry->issued);
     }
 
     $f->add_entry($entry);

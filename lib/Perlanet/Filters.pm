@@ -14,11 +14,14 @@ sub create_filter {
     if      ($cfg->{type} eq 'category') {
         return Perlanet::Filter::Category->new($cfg->{category});
     }
+    elsif   ($cfg->{type} eq 'microblog') {
+        return bless {}, Perlanet::Filter::Microblog;
+    }
     elsif   ($cfg->{type} eq 'vingrad') {
         return bless {}, Perlanet::Filter::Vingrad;
     }
-    elsif   ($cfg->{type} eq 'microblog') {
-        return bless {}, Perlanet::Filter::Microblog;
+    elsif   ($cfg->{type} eq 'blogspot-justify') {
+        return bless {}, Perlanet::Filter::Blogspot_Justify;
     }
 
     die "Unknown filter type requested: $cfg->{type}\n";
@@ -76,13 +79,31 @@ sub filter {
     my $self = shift;
     my @rv;
 
-    ENTRY:
     foreach my $e (@_) {
         my $text = $e->content->body;
 
         $text =~ /<table class='quote'/ and next; # most probably a comment
 
         $text =~ s/<table>.+<td>.+<td>(.+)<\/td>.+<\/table>/$1/s;
+
+        $e->content($text);
+
+        push @rv, $e;
+    }
+
+    return @rv;
+}
+
+package Perlanet::Filter::Blogspot_Justify;
+
+sub filter {
+    my $self = shift;
+    my @rv;
+
+    foreach my $e (@_) {
+        my $text = $e->content->body;
+
+        $text =~ s|<div align="justify"></div>||g;
 
         $e->content($text);
 
