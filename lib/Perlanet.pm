@@ -26,6 +26,8 @@ BEGIN {
 }
 
 BEGIN {
+    # the semi-official fix for Template Toolkit not to break on UTF-8
+    # templates
     use Template::Provider;
     use bytes;
     no warnings 'redefine';
@@ -41,7 +43,7 @@ BEGIN {
         return $s;
     }
 }
-$XML::Atom::ForceUnicode = 1;
+$XML::Atom::ForceUnicode = 1;   # XML::Atom is a mess otherwise
 
 has 'cfg'  => ( is => 'rw', isa => 'HashRef' );
 has 'ua'   => ( is => 'rw', isa => 'LWP::UserAgent' );

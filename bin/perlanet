@@ -124,7 +124,7 @@ FeedBurner url).
 =item feeds
 
 This mandatory option gives details of the web feeds to be aggregated. Each
-item on the list has one mandatory sub-option and two optional sub-options.
+item on the list has one mandatory sub-option and several optional sub-options.
 The mandatory sub-option is C<url> which gives the URL of the feed. The
 optional sub-option C<title> gives a title which will be prepended to all of
 the entry titles taken from that feed. If no title is given, then the title
@@ -162,6 +162,64 @@ file.
     - url: http://www.oreillynet.com/pub/feed/31?au=2607
       title: Dave on O'Reillynet
       web: http://www.oreillynet.com/pub/au/2607
+
+=head2 Filters
+
+There's also a very simple filtering mechanism for feeds. It is
+configured via C<filter> item on a feed. You should specify a type of
+filter and filtering options which depends on its type. The most
+useful filter is C<category> which filters by one or more I<tags> or
+categories. There are also several other filters.
+
+=over 4
+
+=item category
+
+This filter requires additional key named C<category> which is either
+a simple string or an array of strings. The filter removes all entries
+that are not tagged with one of the categories specified in
+configuration.
+
+=item microblog
+
+This filter is intended to be used with feeds from services like
+Twitter or Juick. They usually contain the same text in title as in
+description so this filter replaces the text from the title with the permalink
+to the entry.
+
+=item vingrad
+
+This filter is a custom one used to filter feeds from vingrad.ru
+forums. It can also serve as a very simple example of building custom
+filters.
+
+=item chain
+
+When you initialize filter with an array instead of a hash what is
+created is a chain-filter which just applies all the filters inside in
+the order of their appearance in the config file.
+
+=back
+
+=head2 Filtering example:
+
+  feeds:
+      - url: http://feeds.feedburner.com/bessarabov
+        title: bessarabov
+        web: http://blog.bessarabov.ru/
+        filter:
+          type: category
+          category:
+            - perl       # only items tagged as "perl" or "Perl" end up in the Planet
+            - Perl
+      - url: http://rss.juick.com/freefd/blog
+        title: Fd (freefd)
+        web: http://juick.com/freefd/?tag=perl
+        filter:                     # this is a chain of filters
+          - type: category
+            category: perl
+          - type: microblog         # "microblog" filter substitutes
+                                    # the title with the link
 
 =head2 Output Template
 
