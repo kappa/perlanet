@@ -332,6 +332,10 @@ sub run {
                $self->cfg->{page}{file},
                { binmode => ':utf8'})
     or die $tt->error;
+
+  if ($cfg->{ping}) {
+      $self->ua->get($cfg->{ping});
+  }
 }
 
 =head1 TO DO

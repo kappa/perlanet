@@ -104,6 +104,12 @@ all the feeds. This can be used to configure Google Custom Search Engine
 or any other external spider to crawl the pages. C<cse_links> option
 should contain the file name or be absent.
 
+=item ping
+
+The system can also ping an URL via HTTP GET. This can, for example,
+be used to ping FeedBurner service. Specify full URL in this
+optional parameter. See L<http://feedburner.google.com/fb/a/ping>.
+
 =item page
 
 This mandatory option contains the details of the web page to be created.
