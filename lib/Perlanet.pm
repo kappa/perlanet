@@ -333,8 +333,8 @@ sub run {
                { binmode => ':utf8'})
     or die $tt->error;
 
-  if ($cfg->{ping}) {
-      $self->ua->get($cfg->{ping});
+  if ($self->cfg->{ping}) {
+      $self->ua->get($self->cfg->{ping});
   }
 }
 
