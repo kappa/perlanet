@@ -22,6 +22,7 @@ my $build = Module::Build->new(
                 "HTML::Tidy"           => 0,
                 "HTML::Scrubber"       => 0,
                 "Moose"                => 0,
+                "CHI"                  => 0,
 	},
         build_requires     => {
         	'Test::More'          => 0,
