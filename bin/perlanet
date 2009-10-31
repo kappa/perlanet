@@ -4,15 +4,46 @@ use strict;
 use warnings;
 
 use Perlanet;
+use Getopt::Std;
+use File::Basename;
 
 use vars qw{$VERSION};
+
 BEGIN {
-  $VERSION = '0.01';
+  $VERSION = $Perlanet::VERSION;
 }
+
+my %opts;
+getopts('hv', \%opts);
+
+version() if $opts{v} || $opts{h};
+help()    if $opts{h};
+exit      if $opts{v} || $opts{h};
 
 my $p = Perlanet->new(shift || './perlanetrc');
 
 $p->run;
+
+sub version {
+  my ($me) = fileparse $0;
+
+  print "\n$me, version $VERSION\n\n";
+}
+
+sub help {
+  my ($me) = fileparse $0;
+
+  print <<EOTEXT;
+Usage: $me [-h] [-v] [config_file]
+
+  -h Display this help message
+  -v Display version information
+
+  config_file
+     Name of configuration file (defaults to perlanetrc)
+
+EOTEXT
+}
 
 =head1 NAME
 
@@ -89,6 +120,15 @@ touch with you if they have any concerns about your use of their site.
 The maximum number of entries to include in the aggregated content. This option
 is mandatory.
 
+=item entries_per_feed
+
+The C<entries> value above defines the total number of entries in the
+aggregated output feed. The <entries_per_feed> value defines the number of
+entries to take from each of your source feeds. For example, if this is
+set to 1 then there will only be one entry from each feed in your output.
+If this value is 0 (or missing) then all values from all source feeds are
+used.
+
 =item opml
 
 The system can optionally create an OPML file containing details of the
@@ -127,6 +167,12 @@ C<format> gives the format of the output (currently 'Atom' or 'RSS')
 and C<url> gives the url by which your plan to serve the feed (e.g.
 FeedBurner url).
 
+=item cache_dir
+
+This if you give a directory name in this option then perlanet will use the
+cache facility of URI::Fetch. This means that web feeds will only be downloaded
+when they change.
+
 =item feeds
 
 This mandatory option gives details of the web feeds to be aggregated. Each
@@ -158,6 +204,7 @@ file.
   feed:
     file: atom.xml
     format: Atom
+  cache_dir: /tmp/feeds
   feeds:
     - url: http://blog.dave.org.uk/atom.xml
       title: Dave's Blog

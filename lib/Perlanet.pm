@@ -3,9 +3,11 @@ package Perlanet;
 use strict;
 use warnings;
 
+use Carp;
 use Moose;
 use Encode;
 use List::Util 'min';
+use POSIX qw(setlocale LC_ALL);
 use URI::Fetch;
 use XML::Feed;
 use Template;
@@ -18,11 +20,11 @@ use POSIX qw//;
 use CHI;
 use Perlanet::Filters;
 
-require XML::OPML::SimpleGen;
 
 use vars qw{$VERSION};
+
 BEGIN {
-  $VERSION = '0.21';
+  $VERSION = '0.36';
 }
 
 BEGIN {
@@ -43,7 +45,7 @@ BEGIN {
         return $s;
     }
 }
-$XML::Atom::ForceUnicode = 1;   # XML::Atom is a mess otherwise
+$XML::Atom::ForceUnicode = 1;
 
 has 'cfg'  => ( is => 'rw', isa => 'HashRef' );
 has 'ua'   => ( is => 'rw', isa => 'LWP::UserAgent' );
@@ -94,7 +96,8 @@ sub BUILDARGS {
   @_ or @_ = ('./perlanetrc');
 
   if ( @_ == 1 && ! ref $_[0] ) {
-    open my $cfg_file, '<:utf8', $_[0];
+    open my $cfg_file, '<:utf8', $_[0]
+      or croak "Cannot open file $_[0]: $!";
     return { cfg => LoadFile($cfg_file) };
   } else {
     return $class->SUPER::BUILDARGS(@_);
@@ -104,28 +107,47 @@ sub BUILDARGS {
 sub BUILD {
   my $self = shift;
 
-  $self->ua(LWP::UserAgent->new(
-    agent => $self->cfg->{agent} ||= "Perlanet/$VERSION"
-  ));
+  $self->ua(LWP::UserAgent->new( agent => $self->cfg->{agent} ||=
+                                           "Perlanet/$VERSION" ));
+  $self->ua->show_progress(1) if -t STDOUT;
+
+  if ($self->cfg->{cache_dir}) {
+    eval { require CHI; };
+
+    if ($@) {
+      warn "You need to install CHI to enable caching.\n";
+      warn "Caching disabled for this run.\n";
+      delete $self->cfg->{cache_dir};
+    }
+  }
 
   $self->cfg->{cache_dir}
     and $self->cache(CHI->new(
-      driver        => 'File',
-      root_dir      => $self->cfg->{cache_dir},
-      expires_in    => 60 * 60 * 24 * 30,
+      driver     => 'File',
+      root_dir   => $self->cfg->{cache_dir},
+      expires_in => 60 * 60 * 24 * 30,
   ));
 
   my $opml;
   if ($self->cfg->{opml}) {
-    my $loc = POSIX::setlocale(&POSIX::LC_ALL, "C");
-    $opml = XML::OPML::SimpleGen->new;
-    POSIX::setlocale(&POSIX::LC_ALL, $loc);
-    $opml->head(
-      title => $self->cfg->{title},
-    );
-  }
+    eval { require XML::OPML::SimpleGen; };
 
-  $self->opml($opml);
+    if ($@) {
+      warn 'You need to install XML::OPML::SimpleGen to enable OPML ' .
+           "Support.\n";
+      warn "OPML support disabled for this run.\n";
+      delete $self->cfg->{opml};
+    } else {
+      my $loc = setlocale(LC_ALL, 'C');
+      $opml = XML::OPML::SimpleGen->new;
+      setlocale(LC_ALL, $loc);
+      $opml->head(
+        title => $self->cfg->{title},
+      );
+
+      $self->opml($opml);
+    }
+  }
 }
 
 =head2 run
@@ -139,17 +161,20 @@ sub run {
 
   my @entries;
 
+  my $day_zero = DateTime->from_epoch(epoch=>0);
+
   foreach my $f (@{$self->cfg->{feeds}}) {
     my $response = URI::Fetch->fetch($f->{url},
-        UserAgent   => $self->ua,
-        Cache       => $self->cache || undef,
-        ForceResponse=> 1,
+      UserAgent     => $self->ua,
+      Cache         => $self->cache || undef,
+      ForceResponse => 1,
     );
 
-    if ($response->is_error) {
-      warn "$f->{url}:\n" . $response->http_response->status_line;
-      next;
+    unless ($response->is_success) {
+      warn "$f->{url}:\n" . $response->http_response->status_line . "\n";
     }
+
+    next if $response->is_error;
 
     my $data = $response->content;
 
@@ -165,17 +190,29 @@ sub run {
       next;
     }
 
-    if ($feed->format ne $self->{cfg}{feed}{format}) {
-      $feed = $feed->convert($self->{cfg}{feed}{format});
+    if ($feed->format ne $self->cfg->{feed}{format}) {
+      $feed = $feed->convert($self->cfg->{feed}{format});
     }
 
     unless (defined $f->{title}) {
       $f->{title} = $feed->title;
     } 
 
-    my @feed_entries = map { $_->title("$f->{title}: " . ($_->title || '(без заголовка)')); $_ } $feed->entries;
+    my @feed_entries = sort {
+      ($b->modified || $b->issued || $day_zero)
+        <=>
+      ($a->modified || $a->issued || $day_zero)
+    } $feed->entries;
 
-    push @entries, Perlanet::Filters->filter($f->{filter}, @feed_entries);
+    if ($self->cfg->{entries_per_feed} and
+      @feed_entries > $self->cfg->{entries_per_feed}) {
+      $#feed_entries = $self->cfg->{entries_per_feed} - 1;
+    }
+
+    push @entries, Perlanet::Filters->filter($f->{filter},
+        map {
+            $_->title("$f->{title}: " . ($_->title || '(без заголовка)'));
+            $_ } @feed_entries);
 
     if ($self->opml) {
       $self->opml->insert_outline(
@@ -202,9 +239,9 @@ sub run {
   my $day_zero = DateTime->from_epoch(epoch=>0);
 
   @entries = sort {
-                    ($b->issued || $b->modified || $day_zero)
+                    ($b->modified || $b->issued || $day_zero)
                      <=>
-                    ($a->issued || $b->modified || $day_zero)
+                    ($a->modified || $a->issued || $day_zero)
                   } @entries;
 
   my $week_in_future = DateTime->now + DateTime::Duration->new(weeks => 1);
@@ -214,7 +251,7 @@ sub run {
 
   # Only need so many entries
   if (@entries > $self->cfg->{entries}) {
-    $#entries = $self->cfg->{entries};
+    $#entries = $self->cfg->{entries} - 1;
   }
 
   # Preferences for HTML::Tidy
@@ -245,9 +282,9 @@ sub run {
     span   => {
       id    => 0,               # blogger(?) includes spans with id attribute
     },
-    a       => {
-        href    => 1,
-        '*'     => 0,
+    a      => {
+      href  => 1,
+      '*'   => 0,
     },
   );
 
@@ -321,7 +358,8 @@ sub run {
     $f->add_entry($entry);
   }
 
-  open my $feedfile, '>', $self->cfg->{feed}{file} or die $!;
+  open my $feedfile, '>', $self->cfg->{feed}{file}
+    or croak 'Cannot open ' . $self->cfg->{feed}{file} . " for writing: $!";
   print $feedfile $f->as_xml;
   close $feedfile;
 
@@ -331,7 +369,7 @@ sub run {
                { feed => $f, cfg => $self->cfg },
                $self->cfg->{page}{file},
                { binmode => ':utf8'})
-    or die $tt->error;
+    or croak $tt->error;
 
   if ($self->cfg->{ping}) {
       $self->ua->get($self->cfg->{ping});
