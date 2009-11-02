@@ -236,8 +236,6 @@ sub run {
     }
   }
 
-  my $day_zero = DateTime->from_epoch(epoch=>0);
-
   @entries = sort {
                     ($b->modified || $b->issued || $day_zero)
                      <=>
