@@ -170,11 +170,10 @@ sub run {
       ForceResponse => 1,
     );
 
-    unless ($response->is_success) {
+    if ($response->is_error) {
       warn "$f->{url}:\n" . $response->http_response->status_line . "\n";
+      next;
     }
-
-    next if $response->is_error;
 
     my $data = $response->content;
 
