@@ -198,9 +198,9 @@ sub run {
     } 
 
     my @feed_entries = sort {
-      ($b->modified || $b->issued || $day_zero)
+      ($b->issued || $day_zero)
         <=>
-      ($a->modified || $a->issued || $day_zero)
+      ($a->issued || $day_zero)
     } $feed->entries;
 
     if ($self->cfg->{entries_per_feed} and
@@ -236,9 +236,9 @@ sub run {
   }
 
   @entries = sort {
-                    ($b->modified || $b->issued || $day_zero)
+                    ($b->issued || $day_zero)
                      <=>
-                    ($a->modified || $a->issued || $day_zero)
+                    ($a->issued || $day_zero)
                   } @entries;
 
   my $week_in_future = DateTime->now + DateTime::Duration->new(weeks => 1);
