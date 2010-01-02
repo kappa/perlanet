@@ -23,6 +23,9 @@ sub create_filter {
     elsif   ($cfg->{type} eq 'blogspot-justify') {
         return bless {}, Perlanet::Filter::Blogspot_Justify;
     }
+    elsif   ($cfg->{type} eq 'author-v') {
+        return Perlanet::Filter::Author_V->new($cfg->{re});
+    }
 
     die "Unknown filter type requested: $cfg->{type}\n";
 }
@@ -139,6 +142,32 @@ sub filter {
 
     foreach my $filter (@{$self->{filters}}) {
         @rv = $filter->filter(@rv);
+    }
+
+    return @rv;
+}
+
+package Perlanet::Filter::Author_V;
+use List::Util qw/first/;
+
+sub new {
+    my $class = shift;
+    my $self = {};
+    $self->{re} = shift;
+
+    bless $self, $class;
+}
+
+sub filter {
+    my $self = shift;
+    my @rv;
+
+    foreach my $e (@_) {
+        if ( $e->{author}->{name}  !~ /\Q$self->{re}\E/
+          && $e->{author}->{email} !~ /\Q$self->{re}\E/)
+        {
+            push @rv, $e;
+        }
     }
 
     return @rv;
