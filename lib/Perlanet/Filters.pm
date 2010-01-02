@@ -163,8 +163,8 @@ sub filter {
     my @rv;
 
     foreach my $e (@_) {
-        if ( $e->{author}->{name}  !~ /\Q$self->{re}\E/
-          && $e->{author}->{email} !~ /\Q$self->{re}\E/)
+        if ( $e->{entry}->author->name  !~ /\Q$self->{re}\E/
+          && $e->{entry}->author->email !~ /\Q$self->{re}\E/)
         {
             push @rv, $e;
         }
